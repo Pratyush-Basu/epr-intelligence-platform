@@ -236,7 +236,7 @@ The RAG pipeline is implemented across three modules: `ingest.py`, `vector_store
 1. Document Ingestion (ingest.py)
    ├── Scan documents/epr_docs/ for .pdf and .txt files
    ├── Extract text via PyMuPDF (fitz)
-   ├── Chunk text: CHUNK_SIZE=600 tokens, CHUNK_OVERLAP=80
+   ├── Chunk text: CHUNK_SIZE=700 tokens, CHUNK_OVERLAP=130
    └── Track ingested files in metadata.json (avoids re-ingestion on restart)
 
 2. Embedding Generation
