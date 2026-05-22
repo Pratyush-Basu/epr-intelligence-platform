@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="page-title">
+                <i class="bi bi-chat-dots me-2 text-warning"></i>
+                EPR Compliance Assistant
+            </h1>
+            <p class="text-muted mb-0">Ask compliance questions — answered from official EPR documents using local RAG +
+                FAISS</p>
+        </div>
+        <div class="col-auto">
+            <a href="/" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+
+        <!-- Info Banner -->
+        <div class="alert alert-warning d-flex gap-2 align-items-start mb-4" role="alert">
+            <i class="bi bi-shield-check mt-1 flex-shrink-0 text-warning"></i>
+            <div>
+                <strong>Hallucination Prevention Active.</strong>
+                This assistant only answers from retrieved EPR document context.
+                If no relevant context is found above the confidence threshold,
+                it returns <em>"I do not know based on the provided documents"</em> — no guessing.
+            </div>
+        </div>
+
+        <!-- Chat Window -->
+        <div class="gp-card chat-window">
+            <div class="gp-card-header d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="chat-avatar">
+                        <i class="bi bi-robot text-warning"></i>
+                    </div>
+                    <div>
+                        <div class="fw-600">GreenPack EPR Assistant</div>
+                        <div class="text-muted small">Powered by Groq llama-3.3-70b-versatile · FAISS ·
+                            sentence-transformers</div>
+                    </div>
+                </div>
+                <div id="chatStatus" class="badge bg-success rounded-pill px-3">
+                    <i class="bi bi-circle-fill me-1" style="font-size:0.5rem;"></i>Local AI
+                </div>
+            </div>
+
+            <!-- Messages container -->
+            <div class="chat-messages" id="chatMessages">
+                <!-- Initial greeting -->
+                <div class="chat-msg chat-msg-bot">
+                    <div class="chat-bubble">
+                        <p class="mb-2">👋 Hello! I'm the GreenPack EPR Compliance Assistant.</p>
+                        <p class="mb-2">I can answer questions about:</p>
+                        <ul class="mb-2">
+                            <li>EPR obligations for plastic producers</li>
+                            <li>Plastic packaging categories (I–IV)</li>
+                            <li>CPCB registration and compliance process</li>
+                            <li>EPR targets and penalties</li>
+                            <li>Certificate procurement and PROs</li>
+                        </ul>
+                        <p class="mb-0 text-muted small">All answers are grounded in your uploaded EPR documents.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-area">
+                <div class="suggested-questions mb-3" id="suggestedQuestions">
+                    <div class="sq-label text-muted small mb-2">
+                        <i class="bi bi-lightning-fill text-warning me-1"></i>Quick Questions:
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill sq-btn"
+                            onclick="fillQuestion('What are EPR obligations for plastic producers?')">EPR
+                            Obligations</button>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill sq-btn"
+                            onclick="fillQuestion('What are the plastic packaging categories under EPR?')">Packaging
+                            Categories</button>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill sq-btn"
+                            onclick="fillQuestion('What are the penalties for non-compliance with EPR?')">Penalties</button>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill sq-btn"
+                            onclick="fillQuestion('How are EPR certificates procured?')">EPR Certificates</button>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <input type="text" id="questionInput" class="form-control gp-input chat-input"
+                        placeholder="Ask an EPR compliance question..."
+                        onkeydown="if(event.key==='Enter') sendQuestion()" />
+                    <button class="btn btn-warning rounded-pill px-4 fw-600 text-dark" id="askBtn"
+                        onclick="sendQuestion()">
+                        <i class="bi bi-send me-1"></i>Ask
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function fillQuestion(text) {
+        document.getElementById('questionInput').value = text;
+        document.getElementById('questionInput').focus();
+    }
+
+    async function sendQuestion() {
+        const input = document.getElementById('questionInput');
+        const question = input.value.trim();
+        if (!question || question.length < 5) {
+            showToast('Please enter a question (at least 5 characters).', 'warning');
+            return;
+        }
+
+        // Add user message to chat
+        appendMessage('user', question);
+        input.value = '';
+
+        // Hide suggested questions after first use
+        document.getElementById('suggestedQuestions').style.display = 'none';
+
+        // Loading state
+        const btn = document.getElementById('askBtn');
+        const origText = btn.innerHTML;
+        setLoading(btn, true, origText);
+        const thinkingId = appendThinking();
+
+        try {
+            const res = await fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question })
+            });
+
+            const data = await res.json();
+
+            // Remove thinking bubble
+            document.getElementById(thinkingId)?.remove();
+
+            if (!res.ok) {
+                appendMessage('error', data.detail || 'An error occurred.');
+                return;
+            }
+
+            appendAnswer(data);
+
+        } catch (err) {
+            document.getElementById(thinkingId)?.remove();
+            appendMessage('error', 'Network error — is the server running?');
+            console.error(err);
+        } finally {
+            setLoading(btn, false, origText);
+        }
+    }
+
+    function appendMessage(role, text) {
+        const container = document.getElementById('chatMessages');
+        const isUser = role === 'user';
+        const isError = role === 'error';
+        const html = `
+        <div class="chat-msg ${isUser ? 'chat-msg-user' : 'chat-msg-bot'}">
+            ${isUser ? '' : `<div class="chat-avatar-sm"><i class="bi bi-robot text-warning"></i></div>`}
+            <div class="chat-bubble ${isError ? 'chat-bubble-error' : ''}">
+                ${isError ? `<i class="bi bi-x-circle me-2 text-danger"></i>` : ''}
+                ${escapeHtml(text)}
+            </div>
+            ${isUser ? `<div class="chat-avatar-sm user-avatar"><i class="bi bi-person-fill"></i></div>` : ''}
+        </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function appendThinking() {
+        const id = 'thinking_' + Date.now();
+        const container = document.getElementById('chatMessages');
+        container.insertAdjacentHTML('beforeend', `
+        <div id="${id}" class="chat-msg chat-msg-bot">
+            <div class="chat-avatar-sm"><i class="bi bi-robot text-warning"></i></div>
+            <div class="chat-bubble thinking">
+                <span class="thinking-dot"></span>
+                <span class="thinking-dot"></span>
+                <span class="thinking-dot"></span>
+            </div>
+        </div>`);
+        container.scrollTop = container.scrollHeight;
+        return id;
+    }
+
+    function appendAnswer(data) {
+        const container = document.getElementById('chatMessages');
+        const isNoContext = !data.context_found;
+
+        let citationsHtml = '';
+        if (data.citations && data.citations.length > 0) {
+            citationsHtml = `
+            <div class="citations-block mt-3">
+                <div class="citations-label">
+                    <i class="bi bi-journal-text me-1"></i>Sources
+                </div>
+                <div class="citations-list">
+                    ${data.citations.map(c => `
+                        <div class="citation-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <span class="citation-source"><i class="bi bi-file-text me-1"></i>${escapeHtml(c.source)}</span>
+                                <span class="citation-score badge bg-success-subtle text-success rounded-pill">${(c.score * 100).toFixed(0)}% match</span>
+                            </div>
+                            <div class="citation-preview text-muted small mt-1">${escapeHtml(c.preview)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+        }
+
+        const html = `
+        <div class="chat-msg chat-msg-bot">
+            <div class="chat-avatar-sm"><i class="bi bi-robot text-warning"></i></div>
+            <div class="chat-bubble ${isNoContext ? 'chat-bubble-no-context' : ''}">
+                ${isNoContext ? `<div class="no-context-badge mb-2"><i class="bi bi-info-circle me-1"></i>No matching context found above confidence threshold</div>` : ''}
+                <p class="mb-0">${escapeHtml(data.answer)}</p>
+                ${citationsHtml}
+                <div class="msg-meta mt-2 text-muted small">
+                    <i class="bi bi-cpu me-1"></i>llama-3.3-70b-versatile · Groq API · Cloud-hosted inference
+                </div>
+            </div>
+        </div>`;
+
+        container.insertAdjacentHTML('beforeend', html);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

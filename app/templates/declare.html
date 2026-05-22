@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="page-title">
+                <i class="bi bi-file-earmark-plus me-2 text-success"></i>
+                Submit EPR Declaration
+            </h1>
+            <p class="text-muted mb-0">Monthly plastic quantity declaration — CPCB EPR compliance</p>
+        </div>
+        <div class="col-auto">
+            <a href="/" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+
+        <!-- Info alert -->
+        <div class="alert alert-info d-flex gap-2 align-items-start mb-4" role="alert">
+            <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
+            <div>
+                <strong>No LLM is used in this step.</strong>
+                Declaration submission is fully deterministic — quantities are validated, 
+                stored with a UUID, and timestamped. AI is only involved in the reconciliation summary.
+            </div>
+        </div>
+
+        <!-- Declaration Form Card -->
+        <div class="gp-card">
+            <div class="gp-card-header">
+                <i class="bi bi-clipboard-data me-2 text-success"></i>
+                <h6 class="mb-0 fw-600 d-inline">Monthly Declaration Form</h6>
+            </div>
+            <div class="gp-card-body">
+                <form id="declarationForm" novalidate>
+
+                    <!-- Producer ID -->
+                    <div class="mb-4">
+                        <label for="producer_id" class="form-label fw-500">
+                            Producer ID <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control gp-input" id="producer_id"
+                               placeholder="e.g. GREENPACK-001"
+                               maxlength="50" required />
+                        <div class="form-text">Your CPCB-registered producer identifier</div>
+                        <div class="invalid-feedback">Producer ID is required.</div>
+                    </div>
+
+                    <!-- Month -->
+                    <div class="mb-4">
+                        <label for="month" class="form-label fw-500">
+                            Declaration Month <span class="text-danger">*</span>
+                        </label>
+                        <input type="month" class="form-control gp-input" id="month"
+                               required />
+                        <div class="form-text">Month for which quantities are being declared (YYYY-MM)</div>
+                        <div class="invalid-feedback">Please select a valid month.</div>
+                    </div>
+
+                    <!-- Quantities -->
+                    <div class="mb-2">
+                        <label class="form-label fw-500">
+                            Declared Quantities (kg) <span class="text-danger">*</span>
+                        </label>
+                        <div class="row g-3">
+
+                            <div class="col-12">
+                                <div class="quantity-input-group">
+                                    <div class="quantity-label">
+                                        <span class="cat-dot bg-success"></span>
+                                        Rigid Plastic
+                                        <span class="badge bg-secondary ms-1 small">Category I</span>
+                                    </div>
+                                    <input type="number" class="form-control gp-input" id="rigid_plastic"
+                                           placeholder="0" min="0" step="0.01" required />
+                                    <div class="invalid-feedback">Must be a non-negative number.</div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="quantity-input-group">
+                                    <div class="quantity-label">
+                                        <span class="cat-dot bg-primary"></span>
+                                        Flexible Plastic
+                                        <span class="badge bg-secondary ms-1 small">Category II</span>
+                                    </div>
+                                    <input type="number" class="form-control gp-input" id="flexible_plastic"
+                                           placeholder="0" min="0" step="0.01" required />
+                                    <div class="invalid-feedback">Must be a non-negative number.</div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="quantity-input-group">
+                                    <div class="quantity-label">
+                                        <span class="cat-dot bg-warning"></span>
+                                        Multilayer Plastic
+                                        <span class="badge bg-secondary ms-1 small">Category III</span>
+                                    </div>
+                                    <input type="number" class="form-control gp-input" id="multilayer_plastic"
+                                           placeholder="0" min="0" step="0.01" required />
+                                    <div class="invalid-feedback">Must be a non-negative number.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Preview -->
+                    <div class="total-preview mt-3 mb-4">
+                        <span class="text-muted small">Total Declared:</span>
+                        <span class="fw-600 text-success" id="totalPreview">0 kg</span>
+                    </div>
+
+                    <!-- Submit button -->
+                    <button type="submit" class="btn btn-success w-100 btn-lg rounded-pill fw-600" id="submitBtn">
+                        <i class="bi bi-send me-2"></i>Submit Declaration
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Success card (hidden until submission) -->
+        <div id="successCard" class="gp-card border-success mt-4" style="display:none;">
+            <div class="gp-card-body text-center py-4">
+                <div class="success-checkmark">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size:3rem;"></i>
+                </div>
+                <h5 class="fw-600 mt-3">Declaration Submitted</h5>
+                <p class="text-muted">Your declaration has been recorded successfully.</p>
+                <div class="declaration-details mt-3 text-start">
+                    <div class="detail-row">
+                        <span class="text-muted">Record ID:</span>
+                        <code id="resultRecordId" class="text-success"></code>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">Producer:</span>
+                        <strong id="resultProducer"></strong>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">Month:</span>
+                        <strong id="resultMonth"></strong>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">Submitted:</span>
+                        <span id="resultTimestamp"></span>
+                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-2 justify-content-center">
+                    <a href="/summary" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-bar-chart-line me-1"></i>View Summary
+                    </a>
+                    <button class="btn btn-outline-success rounded-pill px-4" onclick="resetForm()">
+                        <i class="bi bi-plus-circle me-1"></i>New Declaration
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live total preview
+['rigid_plastic','flexible_plastic','multilayer_plastic'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateTotal);
+});
+
+function updateTotal() {
+    const values = ['rigid_plastic','flexible_plastic','multilayer_plastic']
+        .map(id => parseFloat(document.getElementById(id).value) || 0);
+    const total = values.reduce((a,b)=>a+b, 0);
+    document.getElementById('totalPreview').textContent = total.toLocaleString() + ' kg';
+}
+
+// Form submission
+document.getElementById('declarationForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+    }
+
+    // Additional validation
+    const producer = document.getElementById('producer_id').value.trim();
+    const month = document.getElementById('month').value;
+    const rigid = parseFloat(document.getElementById('rigid_plastic').value) || 0;
+    const flexible = parseFloat(document.getElementById('flexible_plastic').value) || 0;
+    const multilayer = parseFloat(document.getElementById('multilayer_plastic').value) || 0;
+
+    if (!producer) { showToast('Producer ID cannot be empty.', 'danger'); return; }
+    if (!month) { showToast('Please select a declaration month.', 'danger'); return; }
+
+    const btn = document.getElementById('submitBtn');
+    const origText = btn.innerHTML;
+    setLoading(btn, true, origText);
+
+    try {
+        const payload = {
+            producer_id: producer,
+            month: month,
+            declared_quantities_kg: {
+                rigid_plastic: rigid,
+                flexible_plastic: flexible,
+                multilayer_plastic: multilayer
+            }
+        };
+
+        const res = await fetch('/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            const msg = data.detail || 'Submission failed.';
+            showToast(typeof msg === 'string' ? msg : JSON.stringify(msg), 'danger');
+            return;
+        }
+
+        // Show success card
+        document.getElementById('resultRecordId').textContent = data.record_id;
+        document.getElementById('resultProducer').textContent = data.producer_id;
+        document.getElementById('resultMonth').textContent = data.month;
+        document.getElementById('resultTimestamp').textContent = new Date(data.submitted_at).toLocaleString();
+        document.getElementById('successCard').style.display = 'block';
+        document.getElementById('successCard').scrollIntoView({ behavior: 'smooth' });
+        form.reset();
+        form.classList.remove('was-validated');
+        updateTotal();
+        showToast('Declaration submitted successfully!', 'success');
+
+    } catch (err) {
+        showToast('Network error — is the server running?', 'danger');
+        console.error(err);
+    } finally {
+        setLoading(btn, false, origText);
+    }
+});
+
+function resetForm() {
+    document.getElementById('successCard').style.display = 'none';
+    document.getElementById('declarationForm').classList.remove('was-validated');
+    document.getElementById('declarationForm').reset();
+    updateTotal();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+{% endblock %}

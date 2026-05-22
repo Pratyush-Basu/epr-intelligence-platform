@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual Environment
+venv/
+.env/
+.venv/
+
+# Environment Variables
+.env
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Python Packaging
+build/
+dist/
+*.egg-info/
+
+# Cache
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# FAISS Generated Files
+faiss_index/*.index
+faiss_index/*.json
+
+# Runtime Generated Metadata
+indexed_documents.json
+
+# Uploaded / Temporary Files
+uploads/
+temp/
+
+# Coverage
+htmlcov/
+.coverage
+
+# Docker
+*.tar
+
+# Local AI Model Artifacts
+ollama_logs/
+
+# Secrets
+secrets.json
+config.local.json

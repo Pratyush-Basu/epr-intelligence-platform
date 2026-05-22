@@ -1,0 +1,561 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="page-title">
+                <i class="bi bi-bar-chart-line me-2 text-primary"></i>
+                ERP Reconciliation Summary
+            </h1>
+            <p class="text-muted mb-0">Compare declared vs ERP-procured quantities — AI compliance narrative via Ollama</p>
+        </div>
+        <div class="col-auto">
+            <a href="/" class="btn btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================== -->
+<!-- QUERY FORM                                                   -->
+<!-- =========================================================== -->
+<div class="gp-card mb-4" id="queryForm">
+    <div class="gp-card-header">
+        <i class="bi bi-search me-2 text-primary"></i>
+        <h6 class="mb-0 fw-600 d-inline">Lookup Reconciliation</h6>
+    </div>
+    <div class="gp-card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label for="inputProducerId" class="form-label fw-500">
+                    Producer ID <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control gp-input" id="inputProducerId"
+                       placeholder="e.g. GREENPACK-001" maxlength="50"
+                       value="{{ prefill_producer_id }}" />
+            </div>
+            <div class="col-md-4">
+                <label for="inputMonth" class="form-label fw-500">
+                    Declaration Month <span class="text-danger">*</span>
+                </label>
+                <input type="month" class="form-control gp-input" id="inputMonth"
+                       value="{{ prefill_month }}" />
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100 rounded-pill fw-600" id="fetchBtn" onclick="fetchSummary()">
+                    <i class="bi bi-bar-chart-line me-2"></i>Load Summary
+                </button>
+            </div>
+        </div>
+        <div id="formError" class="alert alert-danger mt-3 d-none" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span id="formErrorText">Please fill in all required fields.</span>
+        </div>
+    </div>
+</div>
+
+
+<!-- =========================================================== -->
+<!-- SKELETON LOADER (shown during fetch)                        -->
+<!-- =========================================================== -->
+<div id="skeletonLoader" class="d-none">
+    <div class="skeleton-banner mb-4"></div>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4"><div class="skeleton-card" style="height:120px;"></div></div>
+        <div class="col-md-4"><div class="skeleton-card" style="height:120px;"></div></div>
+        <div class="col-md-4"><div class="skeleton-card" style="height:120px;"></div></div>
+    </div>
+    <div class="skeleton-card" style="height:300px; margin-bottom:1rem;"></div>
+    <div class="skeleton-card" style="height:200px;"></div>
+</div>
+
+<!-- =========================================================== -->
+<!-- EMPTY STATE (shown before first fetch)                      -->
+<!-- =========================================================== -->
+<div id="emptyState" class="gp-card">
+    <div class="gp-card-body empty-state py-5">
+        <i class="bi bi-bar-chart fs-1 text-muted"></i>
+        <h5 class="fw-600 mt-3">No Summary Loaded</h5>
+        <p class="text-muted">Enter a Producer ID and month above, then click <strong>Load Summary</strong>.</p>
+        <p class="text-muted small">
+            <i class="bi bi-info-circle me-1"></i>
+            Make sure you've submitted a declaration first via the
+            <a href="/declare" class="text-primary">Declare</a> page.
+        </p>
+    </div>
+</div>
+
+<!-- =========================================================== -->
+<!-- RESULTS PANEL (hidden until data loaded)                    -->
+<!-- =========================================================== -->
+<div id="resultsPanel" class="d-none">
+
+    <!-- Status Banner -->
+    <div id="statusBanner" class="status-banner mb-4">
+        <div id="statusIconWrap">
+            <i id="statusIcon" class="bi fs-2"></i>
+        </div>
+        <div class="flex-grow-1">
+            <div id="statusTitle" class="status-banner-title"></div>
+            <div id="statusSubtitle" class="status-banner-sub"></div>
+        </div>
+        <div>
+            <span id="statusBadge" class="badge rounded-pill fs-6 px-3 py-2"></span>
+        </div>
+    </div>
+
+    <!-- Totals Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card stat-card-blue">
+                <div class="stat-icon"><i class="bi bi-clipboard-data"></i></div>
+                <div class="stat-value" id="totalDeclared">—</div>
+                <div class="stat-label">Total Declared (kg)</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-card-purple">
+                <div class="stat-icon"><i class="bi bi-building"></i></div>
+                <div class="stat-value" id="totalProcured">—</div>
+                <div class="stat-label">Total ERP Procured (kg)</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-card-orange">
+                <div class="stat-icon"><i class="bi bi-percent"></i></div>
+                <div class="stat-value" id="overallDiff">—</div>
+                <div class="stat-label">Overall Difference</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reconciliation Table -->
+    <div class="gp-card mb-4">
+        <div class="gp-card-header d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-table text-primary"></i>
+                <h6 class="mb-0 fw-600">Category-wise Reconciliation</h6>
+            </div>
+            <div class="d-flex gap-2">
+                <span class="badge bg-success rounded-pill px-3">
+                    <i class="bi bi-check-circle me-1"></i>OK = ≤5% diff
+                </span>
+                <span class="badge bg-warning text-dark rounded-pill px-3">
+                    <i class="bi bi-exclamation-triangle me-1"></i>MISMATCH = >5% diff
+                </span>
+            </div>
+        </div>
+        <div class="gp-card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover gp-table mb-0" id="reconciliationTable">
+                    <thead>
+                        <tr>
+                            <th>Plastic Category</th>
+                            <th class="text-end">Declared (kg)</th>
+                            <th class="text-end">ERP Procured (kg)</th>
+                            <th class="text-end">Difference (kg)</th>
+                            <th class="text-center">Difference %</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reconciliationBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart + AI Summary Row -->
+    <div class="row g-4 mb-4">
+        <!-- Chart.js Comparison Chart -->
+        <div class="col-lg-6">
+            <div class="gp-card h-100">
+                <div class="gp-card-header">
+                    <i class="bi bi-bar-chart-line me-2 text-primary"></i>
+                    <h6 class="mb-0 fw-600 d-inline">Declared vs Procured Comparison</h6>
+                </div>
+                <div class="gp-card-body d-flex align-items-center justify-content-center">
+                    <canvas id="reconciliationChart" style="max-height:280px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Summary Card -->
+        <div class="col-lg-6">
+            <div class="gp-card ai-card h-100">
+                <div class="gp-card-header">
+                    <i class="bi bi-robot me-2 text-warning"></i>
+                    <h6 class="mb-0 fw-600 d-inline">AI Compliance Summary</h6>
+                    <span class="badge bg-warning text-dark ms-2 small">Ollama llama3.2:1b</span>
+                </div>
+                <div class="gp-card-body d-flex flex-column gap-3">
+                    <!-- AI Summary Text -->
+                    <div>
+                        <div class="ai-section-label mb-2">
+                            <i class="bi bi-file-text me-1"></i>Compliance Narrative
+                        </div>
+                        <p id="aiSummaryText" class="mb-0 lh-lg small"></p>
+                    </div>
+                    <!-- Recommendations -->
+                    <div class="recommendations-box">
+                        <div class="rec-label">
+                            <i class="bi bi-lightbulb me-1"></i>Recommendations
+                        </div>
+                        <p id="aiRecommendations" class="mb-0 small lh-lg"></p>
+                    </div>
+                    <!-- Meta info -->
+                    <div class="text-muted small mt-auto">
+                        <i class="bi bi-cpu me-1"></i>Local AI inference · No cloud API · Hallucination-safe
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Meta Info -->
+    <div class="gp-card">
+        <div class="gp-card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-person-badge text-muted"></i>
+                        <div>
+                            <div class="text-muted small">Producer ID</div>
+                            <div class="fw-600" id="metaProducerId">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar3 text-muted"></i>
+                        <div>
+                            <div class="text-muted small">Declaration Month</div>
+                            <div class="fw-600" id="metaMonth">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-fingerprint text-muted"></i>
+                        <div>
+                            <div class="text-muted small">Record ID</div>
+                            <code class="text-success small" id="metaRecordId">—</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /resultsPanel -->
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// =========================================================
+// State
+// =========================================================
+let reconciliationChartInstance = null;
+
+// =========================================================
+// Utility helpers
+// =========================================================
+function fmt(num) {
+    return Number(num).toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
+function fmtPct(pct) {
+    return Number(pct).toFixed(1) + '%';
+}
+
+function showSection(id) {
+    ['emptyState', 'skeletonLoader', 'resultsPanel'].forEach(s => {
+        document.getElementById(s).classList.add('d-none');
+    });
+    document.getElementById(id).classList.remove('d-none');
+}
+
+function setFetchBtnState(loading) {
+    const btn = document.getElementById('fetchBtn');
+    if (loading) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Loading...`;
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-bar-chart-line me-2"></i>Load Summary`;
+    }
+}
+
+function hideFormError() {
+    document.getElementById('formError').classList.add('d-none');
+}
+
+function showFormError(msg) {
+    document.getElementById('formErrorText').textContent = msg;
+    document.getElementById('formError').classList.remove('d-none');
+}
+
+// =========================================================
+// Main fetch function
+// =========================================================
+async function fetchSummary() {
+    hideFormError();
+
+    const producerId = document.getElementById('inputProducerId').value.trim();
+    const month = document.getElementById('inputMonth').value.trim();
+
+    if (!producerId) {
+        showFormError('Producer ID is required.');
+        document.getElementById('inputProducerId').focus();
+        return;
+    }
+    if (!month) {
+        showFormError('Declaration month is required.');
+        document.getElementById('inputMonth').focus();
+        return;
+    }
+
+    showSection('skeletonLoader');
+    setFetchBtnState(true);
+
+    try {
+        const url = `/summary/${encodeURIComponent(producerId)}/${encodeURIComponent(month)}`;
+        const res = await fetch(url, {
+            headers: { 'Accept': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showSection('emptyState');
+            const detail = data.detail || 'Failed to load reconciliation summary.';
+            showFormError(detail);
+            showToast(detail, 'danger');
+            return;
+        }
+
+        renderResults(data);
+        showSection('resultsPanel');
+        showToast('Reconciliation summary loaded successfully!', 'success');
+
+        // Update URL params without page reload
+        const newUrl = `/summary?producer_id=${encodeURIComponent(producerId)}&month=${encodeURIComponent(month)}`;
+        window.history.replaceState({}, '', newUrl);
+
+    } catch (err) {
+        showSection('emptyState');
+        showFormError('Network error — is the server running?');
+        showToast('Network error — server may be unreachable', 'danger');
+        console.error('Summary fetch error:', err);
+    } finally {
+        setFetchBtnState(false);
+    }
+}
+
+// =========================================================
+// Render all result sections
+// =========================================================
+function renderResults(data) {
+    const isOk = data.overall_status === 'OK';
+
+    // --- Status Banner ---
+    const banner = document.getElementById('statusBanner');
+    const icon = document.getElementById('statusIcon');
+    const title = document.getElementById('statusTitle');
+    const subtitle = document.getElementById('statusSubtitle');
+    const badge = document.getElementById('statusBadge');
+
+    banner.className = 'status-banner mb-4 ' + (isOk ? 'status-ok' : 'status-mismatch');
+    icon.className = 'bi fs-2 ' + (isOk ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-warning');
+    title.textContent = isOk
+        ? 'All Categories Within Acceptable Range'
+        : 'Mismatch Detected — Action Required';
+    subtitle.textContent = `Producer: ${data.producer_id} · Month: ${data.month} · Record: ${data.record_id}`;
+    badge.className = 'badge rounded-pill fs-6 px-3 py-2 ' + (isOk ? 'bg-success' : 'bg-warning text-dark');
+    badge.textContent = data.overall_status;
+
+    // --- Totals ---
+    const totalDecl = data.total_declared_kg;
+    const totalProc = data.total_procured_kg;
+    const totalDiffPct = totalProc > 0 ? Math.abs(totalDecl - totalProc) / totalProc * 100 : 0;
+    document.getElementById('totalDeclared').textContent = fmt(totalDecl) + ' kg';
+    document.getElementById('totalProcured').textContent = fmt(totalProc) + ' kg';
+    document.getElementById('overallDiff').textContent = fmtPct(totalDiffPct);
+
+    // Color the overall diff stat card
+    const diffCard = document.getElementById('overallDiff').closest('.stat-card');
+    diffCard.classList.remove('stat-card-orange', 'stat-healthy');
+    if (totalDiffPct <= 5) {
+        diffCard.style.setProperty('--stat-color', '#22c55e');
+        document.getElementById('overallDiff').style.color = '#22c55e';
+    } else {
+        document.getElementById('overallDiff').style.color = '#f59e0b';
+    }
+
+    // --- Table rows ---
+    const tbody = document.getElementById('reconciliationBody');
+    tbody.innerHTML = '';
+    data.items.forEach(item => {
+        const rowOk = item.status === 'OK';
+        const diffPctVal = item.difference_percent;
+        const barColor = rowOk ? '#22c55e' : '#f59e0b';
+        const barWidth = Math.min(100, Math.max(2, diffPctVal * 4));
+
+        const tr = document.createElement('tr');
+        if (!rowOk) tr.classList.add('table-warning-subtle');
+        tr.innerHTML = `
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="cat-dot" style="background:${barColor}"></span>
+                    <span class="fw-500">${escHtml(item.display_name)}</span>
+                </div>
+            </td>
+            <td class="text-end fw-500">${fmt(item.declared_kg)}</td>
+            <td class="text-end fw-500">${fmt(item.procured_kg)}</td>
+            <td class="text-end ${rowOk ? 'text-success' : 'text-warning'}">${fmt(item.difference_kg)}</td>
+            <td class="text-center">
+                <div class="d-flex align-items-center gap-2 justify-content-center">
+                    <div class="diff-bar-wrap">
+                        <div class="diff-bar" style="width:${barWidth}%;background:${barColor};"></div>
+                    </div>
+                    <span class="fw-600 small" style="color:${barColor};min-width:3.5rem;">${fmtPct(diffPctVal)}</span>
+                </div>
+            </td>
+            <td class="text-center">
+                <span class="badge rounded-pill ${rowOk ? 'bg-success' : 'bg-warning text-dark'} px-3">
+                    <i class="bi ${rowOk ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-1"></i>
+                    ${escHtml(item.status)}
+                </span>
+            </td>`;
+        tbody.appendChild(tr);
+    });
+
+    // --- Chart ---
+    renderChart(data.items);
+
+    // --- AI Summary ---
+    document.getElementById('aiSummaryText').textContent = data.ai_summary || 'No AI summary available.';
+    document.getElementById('aiRecommendations').textContent = data.recommendations || 'No recommendations generated.';
+
+    // --- Meta ---
+    document.getElementById('metaProducerId').textContent = data.producer_id;
+    document.getElementById('metaMonth').textContent = data.month;
+    document.getElementById('metaRecordId').textContent = data.record_id;
+}
+
+// =========================================================
+// Chart.js grouped bar chart
+// =========================================================
+function renderChart(items) {
+    const ctx = document.getElementById('reconciliationChart').getContext('2d');
+
+    if (reconciliationChartInstance) {
+        reconciliationChartInstance.destroy();
+        reconciliationChartInstance = null;
+    }
+
+    const labels = items.map(i => i.display_name);
+    const declared = items.map(i => i.declared_kg);
+    const procured = items.map(i => i.procured_kg);
+
+    reconciliationChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Declared (kg)',
+                    data: declared,
+                    backgroundColor: 'rgba(59, 130, 246, 0.75)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                },
+                {
+                    label: 'ERP Procured (kg)',
+                    data: procured,
+                    backgroundColor: 'rgba(34, 197, 94, 0.75)',
+                    borderColor: 'rgba(34, 197, 94, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.dataset.label}: ${Number(ctx.parsed.y).toLocaleString()} kg`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(148,163,184,0.08)' },
+                    ticks: { color: '#94a3b8' }
+                },
+                y: {
+                    grid: { color: 'rgba(148,163,184,0.08)' },
+                    ticks: {
+                        color: '#94a3b8',
+                        callback: v => Number(v).toLocaleString()
+                    },
+                    beginAtZero: true,
+                }
+            }
+        }
+    });
+}
+
+// =========================================================
+// HTML escape helper
+// =========================================================
+function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+// =========================================================
+// Auto-load from SSR-prefilled fields or URL query params
+// =========================================================
+(function autoLoad() {
+    // Values may already be set by Jinja2 SSR (from ?producer_id=...&month=...)
+    const pid = document.getElementById('inputProducerId').value.trim();
+    const mon = document.getElementById('inputMonth').value.trim();
+
+    // Fallback: also check URL params in case SSR didn't fill them
+    if (!pid || !mon) {
+        const params = new URLSearchParams(window.location.search);
+        const urlPid = params.get('producer_id');
+        const urlMon = params.get('month');
+        if (urlPid) document.getElementById('inputProducerId').value = urlPid;
+        if (urlMon) document.getElementById('inputMonth').value = urlMon;
+    }
+
+    // Auto-trigger fetch only when both fields are set
+    const finalPid = document.getElementById('inputProducerId').value.trim();
+    const finalMon = document.getElementById('inputMonth').value.trim();
+    if (finalPid && finalMon) {
+        fetchSummary();
+    }
+})();
+
+
+// Allow Enter key to trigger fetch from inputs
+['inputProducerId', 'inputMonth'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'Enter') fetchSummary();
+    });
+});
+</script>
+{% endblock %}

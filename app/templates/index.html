@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- =========================================================== -->
+<!-- PAGE HEADER                                                  -->
+<!-- =========================================================== -->
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="page-title">
+                <i class="bi bi-grid-1x2 me-2 text-success"></i>
+                Compliance Dashboard
+            </h1>
+            <p class="text-muted mb-0">GreenPack Industries — EPR Compliance Overview</p>
+        </div>
+        <div class="col-auto">
+            <a href="/declare" class="btn btn-success rounded-pill px-4">
+                <i class="bi bi-plus-circle me-2"></i>New Declaration
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================== -->
+<!-- STATS CARDS                                                  -->
+<!-- =========================================================== -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card stat-card-green">
+            <div class="stat-icon"><i class="bi bi-file-earmark-check"></i></div>
+            <div class="stat-value">{{ total_declarations }}</div>
+            <div class="stat-label">Total Declarations</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card stat-card-blue">
+            <div class="stat-icon"><i class="bi bi-recycle"></i></div>
+            <div class="stat-value">3</div>
+            <div class="stat-label">Plastic Categories</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card stat-card-purple">
+            <div class="stat-icon"><i class="bi bi-cpu"></i></div>
+            <div class="stat-value" id="faissCount">—</div>
+            <div class="stat-label">RAG Index Chunks</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card stat-card-orange">
+            <div class="stat-icon"><i class="bi bi-shield-check"></i></div>
+            <div class="stat-value" id="systemStatus">—</div>
+            <div class="stat-label">System Status</div>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================== -->
+<!-- QUICK ACTIONS                                                -->
+<!-- =========================================================== -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="action-card h-100">
+            <div class="action-icon bg-success-subtle text-success">
+                <i class="bi bi-file-earmark-plus fs-3"></i>
+            </div>
+            <h5 class="fw-600 mt-3">Submit Declaration</h5>
+            <p class="text-muted small">File your monthly plastic quantity declaration. Validated against EPR norms with UUID tracking.</p>
+            <a href="/declare" class="btn btn-success w-100 rounded-pill mt-auto">
+                <i class="bi bi-arrow-right-circle me-1"></i>Go to Declaration
+            </a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="action-card h-100">
+            <div class="action-icon bg-primary-subtle text-primary">
+                <i class="bi bi-bar-chart-line fs-3"></i>
+            </div>
+            <h5 class="fw-600 mt-3">ERP Reconciliation</h5>
+            <p class="text-muted small">Compare declared vs ERP-procured quantities. AI-generated compliance summary via Ollama.</p>
+            <a href="/summary" class="btn btn-primary w-100 rounded-pill mt-auto">
+                <i class="bi bi-arrow-right-circle me-1"></i>View Summary
+            </a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="action-card h-100">
+            <div class="action-icon bg-warning-subtle text-warning">
+                <i class="bi bi-chat-dots fs-3"></i>
+            </div>
+            <h5 class="fw-600 mt-3">Compliance Q&A</h5>
+            <p class="text-muted small">Ask EPR compliance questions answered from official documents using local RAG + FAISS.</p>
+            <a href="/ask" class="btn btn-warning w-100 rounded-pill mt-auto text-dark">
+                <i class="bi bi-arrow-right-circle me-1"></i>Ask AI Assistant
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================== -->
+<!-- RECENT DECLARATIONS TABLE                                    -->
+<!-- =========================================================== -->
+<div class="gp-card">
+    <div class="gp-card-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-clock-history text-success"></i>
+            <h6 class="mb-0 fw-600">Recent Declarations</h6>
+        </div>
+        <a href="/declare" class="btn btn-sm btn-outline-success rounded-pill">
+            <i class="bi bi-plus me-1"></i>New
+        </a>
+    </div>
+    <div class="gp-card-body p-0">
+        {% if recent_declarations %}
+        <div class="table-responsive">
+            <table class="table table-dark table-hover gp-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Record ID</th>
+                        <th>Producer</th>
+                        <th>Month</th>
+                        <th>Rigid (kg)</th>
+                        <th>Flexible (kg)</th>
+                        <th>Multilayer (kg)</th>
+                        <th>Submitted</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in recent_declarations %}
+                    <tr>
+                        <td>
+                            <code class="text-success small">{{ d.record_id[:8] }}...</code>
+                        </td>
+                        <td><span class="badge bg-secondary">{{ d.producer_id }}</span></td>
+                        <td>{{ d.month }}</td>
+                        <td>{{ "{:,.0f}".format(d.rigid_plastic_kg) }}</td>
+                        <td>{{ "{:,.0f}".format(d.flexible_plastic_kg) }}</td>
+                        <td>{{ "{:,.0f}".format(d.multilayer_plastic_kg) }}</td>
+                        <td class="text-muted small">{{ d.submitted_at.strftime('%d %b %Y %H:%M') }}</td>
+                        <td>
+                            <a href="/summary?producer_id={{ d.producer_id }}&month={{ d.month }}"
+                               class="btn btn-xs btn-outline-primary rounded-pill px-2 py-0">
+                                <i class="bi bi-bar-chart-line me-1"></i>Summary
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-5">
+            <i class="bi bi-inbox fs-1 text-muted"></i>
+            <p class="text-muted mt-3">No declarations submitted yet.</p>
+            <a href="/declare" class="btn btn-success rounded-pill px-4">
+                <i class="bi bi-plus-circle me-2"></i>Submit First Declaration
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Populate stats from health endpoint
+fetch('/health').then(r => r.json()).then(data => {
+    document.getElementById('faissCount').textContent = data.faiss_chunks ?? '—';
+    const statusEl = document.getElementById('systemStatus');
+    if (data.status === 'ok') {
+        statusEl.textContent = 'Healthy';
+        statusEl.closest('.stat-card').classList.add('stat-healthy');
+    } else {
+        statusEl.textContent = 'Degraded';
+    }
+}).catch(() => {
+    document.getElementById('systemStatus').textContent = 'Unknown';
+});
+</script>
+{% endblock %}

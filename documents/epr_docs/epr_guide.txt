@@ -1,0 +1,269 @@
+EXTENDED PRODUCER RESPONSIBILITY (EPR) COMPLIANCE GUIDE
+For Plastic Waste Management — India
+Central Pollution Control Board (CPCB) Guidelines
+
+=======================================================================
+SECTION 1: INTRODUCTION TO EPR
+=======================================================================
+
+Extended Producer Responsibility (EPR) is a policy approach under which
+producers are given significant responsibility (physical or financial)
+for the treatment or disposal of post-consumer products.
+
+In India, the Plastic Waste Management Rules 2016 (amended in 2022) mandate
+that all producers, importers, and brand owners (PIBOs) of plastic packaging
+must fulfill EPR targets. The rules are enforced by the Central Pollution
+Control Board (CPCB) and State Pollution Control Boards (SPCBs).
+
+EPR obligations apply to:
+- Producers who manufacture plastic packaging materials
+- Importers who bring plastic-packaged goods into India
+- Brand owners who use plastic packaging for their products
+
+=======================================================================
+SECTION 2: CATEGORIES OF PLASTIC PACKAGING
+=======================================================================
+
+Under EPR rules, plastic packaging is classified into four categories:
+
+Category I — Rigid Plastic Packaging:
+- Includes plastic bottles, containers, jars, boxes, and crates
+- Must be collected and recycled or sent to co-processing facilities
+- Minimum recycling target: 50% of plastic introduced in the market
+
+Category II — Flexible Plastic Packaging:
+- Includes pouches, sachets, wrappers, carry bags, and films
+- More challenging to collect and recycle due to contamination
+- Must meet minimum collection targets set by CPCB
+- Often subject to co-processing as end-of-life option
+
+Category III — Multilayer Plastic Packaging:
+- Composed of alternating layers of plastic with other materials
+- Includes laminates, tetra packs, and composite packaging
+- Requires specialized recycling infrastructure
+- EPR targets increasing annually towards full accountability
+
+Category IV — Extended Plastic Packaging (Compostable):
+- Includes certified compostable plastic under IS 17088:2008
+- Exempt from standard EPR targets if certified
+- Producers must obtain certification from accredited labs
+
+=======================================================================
+SECTION 3: REGISTRATION AND COMPLIANCE PROCESS
+=======================================================================
+
+Step 1 — Registration on EPR Portal:
+All PIBOs must register on the centralized EPR portal maintained by CPCB
+at eprs.cpcb.gov.in. Registration requires submitting company details,
+production volumes, and plastic categories.
+
+Step 2 — Annual Target Setting:
+Based on plastic introduced into the market (PIM), CPCB assigns annual
+EPR targets. Targets are expressed as percentages of PIM per category.
+
+Step 3 — Monthly Declaration:
+PIBOs must submit monthly declarations of:
+(a) Plastic quantity produced or imported
+(b) Packaging category breakdown
+(c) Evidence of collection and processing
+
+Step 4 — ERP Reconciliation:
+Declared quantities are reconciled against ERP (Enterprise Resource Planning)
+procurement and production data. Any discrepancy above 5% triggers a
+compliance review.
+
+Step 5 — Certificate Procurement:
+Producers must procure EPR certificates from registered recyclers or
+waste processors. Certificates are issued per metric ton of plastic processed.
+
+Step 6 — Annual Filing:
+By June 30 each year, all PIBOs must file annual returns including:
+- Total plastic introduced in market
+- Total EPR certificates procured
+- Surplus or deficit position
+- Plans for next year
+
+=======================================================================
+SECTION 4: EPR TARGETS AND TIMELINES
+=======================================================================
+
+Financial Year 2024-25:
+- Rigid Plastic: 50% collection and recycling
+- Flexible Plastic: 30% collection and processing
+- Multilayer Plastic: 25% collection and processing
+
+Financial Year 2025-26:
+- Rigid Plastic: 60% collection and recycling
+- Flexible Plastic: 45% collection and processing
+- Multilayer Plastic: 40% collection and processing
+
+Financial Year 2026-27 (proposed):
+- Rigid Plastic: 70% collection and recycling
+- Flexible Plastic: 60% collection and processing
+- Multilayer Plastic: 55% collection and processing
+
+Extended Producers that fail to meet annual targets are liable to:
+- Environmental Compensation as prescribed by NGT
+- Suspension of EPR registration
+- Prohibition on introduction of new plastic in market
+
+=======================================================================
+SECTION 5: PLASTIC INTRODUCED IN MARKET (PIM) CALCULATION
+=======================================================================
+
+PIM is calculated as:
+
+PIM = Raw Material Procured + Opening Stock − Closing Stock − Rejected/Waste
+
+For plastic packaging manufacturers:
+PIM = Packaging Produced and Dispatched for Sale
+
+Producers must maintain monthly records of:
+- Raw material procurement (kg by category)
+- Production outputs (kg by category)
+- Inventory movements
+- Dispatches to customers
+
+All records must be reconciled with financial accounts and GST invoices.
+Discrepancies between declared PIM and ERP-computed PIM above 5% require
+formal explanation to CPCB within 30 days.
+
+=======================================================================
+SECTION 6: EPR CERTIFICATES
+=======================================================================
+
+EPR Certificates are digital credits issued by CPCB-registered waste
+processors and recyclers when they process plastic waste.
+
+Types of EPR Certificates:
+1. Recycling Certificate — issued for plastic recycled into secondary material
+2. Co-processing Certificate — issued for plastic used as fuel in cement kilns
+3. Industrial Composting Certificate — for certified compostable plastics
+
+Certificate Validity:
+- EPR Certificates are valid for one financial year
+- Unused certificates can be banked for up to two years
+- Certificates must be linked to producer's EPR account on portal
+
+Procurement of Certificates:
+Producers can procure certificates from:
+- Registered plastic waste processors (direct procurement)
+- EPR marketplace on CPCB portal (trading platform)
+- Organized collection agencies with processing tie-ups
+
+=======================================================================
+SECTION 7: PENALTIES AND ENFORCEMENT
+=======================================================================
+
+Non-compliance with EPR obligations may result in:
+
+1. Environmental Compensation (EC):
+   - Calculated based on shortfall in EPR targets
+   - Rate: INR 10,000 per metric ton of shortfall for rigid plastic
+   - Rate: INR 15,000 per metric ton for flexible and multilayer
+   
+2. Registration Suspension:
+   - CPCB may suspend EPR registration for repeated non-compliance
+   - Business operations may be halted until compliance is restored
+
+3. Legal Action:
+   - Under Environment Protection Act 1986
+   - Criminal liability for willful misreporting
+
+4. Public Disclosure:
+   - Names of defaulting producers published on CPCB website
+   - Reputational risk for brand owners
+
+=======================================================================
+SECTION 8: EPR OBLIGATIONS FOR PLASTIC PRODUCERS
+=======================================================================
+
+All plastic producers must:
+
+1. Register with CPCB EPR portal before commencing production
+2. Maintain category-wise plastic quantity records monthly
+3. Submit monthly declarations within 15 days of month end
+4. Procure EPR certificates equivalent to EPR targets
+5. Submit annual EPR return by June 30
+6. Retain records for minimum 7 years for audit purposes
+7. Allow CPCB/SPCB officials to inspect production facilities
+8. Report changes in production capacity within 30 days
+9. Notify CPCB of any facility closure or change in business
+
+For rigid plastic producers specifically:
+- Must establish or participate in Producer Responsibility Organization (PRO)
+- PRO coordinates collection from consumers and commercial establishments
+- Monthly reconciliation of collection data with EPR targets is mandatory
+
+=======================================================================
+SECTION 9: PRODUCER RESPONSIBILITY ORGANIZATIONS (PROs)
+=======================================================================
+
+A PRO is a third-party organization authorized by CPCB to assist producers
+in meeting their EPR obligations.
+
+PRO Responsibilities:
+- Collection of post-consumer plastic waste from designated areas
+- Channeling waste to registered recyclers and processors
+- Issuing EPR certificates on behalf of producers
+- Monthly reporting to CPCB on collection and processing volumes
+
+Joining a PRO:
+- Producers may join existing CPCB-registered PROs
+- PRO membership fees vary by company size and plastic volume
+- PROs typically offer bundled EPR certificate procurement
+
+=======================================================================
+SECTION 10: DIGITAL COMPLIANCE TOOLS
+=======================================================================
+
+Modern compliance management requires robust digital infrastructure:
+
+1. ERP Integration:
+   - EPR compliance data must be reconciled with ERP systems
+   - Monthly plastic quantity data extracted from production modules
+   - Variance reports generated for discrepancies above 5%
+
+2. AI-Assisted Compliance:
+   - Natural Language Processing for compliance Q&A
+   - Automated anomaly detection in production data
+   - Predictive analytics for EPR target forecasting
+
+3. Document Management:
+   - Digital storage of EPR certificates
+   - Automated expiry alerts for certificates
+   - Audit trail maintenance for all submissions
+
+4. Reporting Dashboards:
+   - Real-time visibility into EPR position (surplus/deficit)
+   - Category-wise plastic tracking
+   - Trend analysis across months and years
+
+=======================================================================
+SECTION 11: COMMON COMPLIANCE MISTAKES
+=======================================================================
+
+1. Incorrect Category Classification:
+   - Multilayer packaging often miscategorized as flexible
+   - Results in incorrect target calculation
+
+2. Delayed Monthly Declarations:
+   - Late submissions attract penalty notices from CPCB
+   - Submit within 15 days of month end
+
+3. ERP Data Mismatch:
+   - Declared quantities inconsistent with ERP procurement data
+   - Common cause: rounding errors in unit conversion (grams to kg)
+   - Solution: standardize on kg across all systems
+
+4. Certificate Shortfall:
+   - Not procuring sufficient EPR certificates before year end
+   - Plan certificate procurement quarterly, not annually
+
+5. Unreported Inventory:
+   - Closing stock adjustments not reflected in declarations
+   - Maintain monthly inventory reconciliation as SOP
+
+=======================================================================
+END OF DOCUMENT
+=======================================================================
